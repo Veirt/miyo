@@ -14,6 +14,8 @@
 //   -f format            output image format (jpg/png/webp, default=ext/png)
 //   -v                   verbose output
 
+import { dev } from "$app/environment";
+
 interface Upscaler {
   key: string;
   name: string;
@@ -63,7 +65,8 @@ export const waifu2x: Upscaler = {
   name: "waifu2x",
   scale: {
     default: 2,
-    available: [1, 2, 4, 8, 16, 32],
+    // like what, I don't want people to use 32x. My server will die.
+    available: dev ? [1, 2, 4, 8, 16, 32] : [1, 2, 4, 8],
   },
   denoiseLevel: {
     default: 0,

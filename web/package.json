@@ -24,6 +24,7 @@
   "type": "module",
   "dependencies": {
     "@unocss/extractor-svelte": "^0.58.5",
-    "@unocss/vite": "^0.58.5"
+    "@unocss/vite": "^0.58.5",
+    "svelte-file-dropzone": "^2.0.4"
   }
 }
