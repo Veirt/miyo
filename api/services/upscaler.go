@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -68,10 +67,18 @@ type Waifu2xUpscaler struct {
 	OutputType   string `json:"outputType" validate:"required,oneof=jpg png webp"`
 }
 
-func (u *Waifu2xUpscaler) Upscale() (out string, err error) {
+func (u *Waifu2xUpscaler) Upscale(file *os.File) (string, error) {
+	s := fmt.Sprintf("%d", u.Scale)
+	dl := fmt.Sprintf("%d", u.DenoiseLevel)
+
+	outDir := "out"
+	outPath := outDir + "/" + uuid.New().String() + "." + u.OutputType
+	cmd := exec.Command("waifu2x-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", s, "-n", dl, "-f", u.OutputType)
+	err := cmd.Run()
+
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return "", nil
+	return outPath, nil
 }

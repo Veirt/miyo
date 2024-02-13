@@ -13,7 +13,6 @@
     let key: Upscaler = "realesrgan";
     function handleKeyChange(key: Upscaler) {
         opt = {
-            ...opt,
             scale: upscalers[key].scale.default,
             denoiseLevel: upscalers[key].denoiseLevel?.default,
             modelName: upscalers[key].modelName[0],
@@ -22,7 +21,6 @@
     }
 
     let opt = {
-        upscaler: key,
         scale: upscalers[key].scale.default,
         denoiseLevel: upscalers[key].denoiseLevel?.default,
         modelName: upscalers[key].modelName[0],
@@ -66,7 +64,7 @@
         // append the image
         formData.append("image", image);
 
-        const res = await fetch(`/api/upscale/${opt.upscaler}`, {
+        const res = await fetch(`/api/upscale/${key}`, {
             method: "POST",
             body: formData,
         });
@@ -82,9 +80,9 @@
         if (imageResultEl.src) {
             const a = document.createElement("a");
             a.href = imageResultEl.src;
-            a.download = `${image.name.split(".")[0]}_${opt.upscaler}_${
-                opt.scale
-            }x_${opt.modelName}.${opt.outputType}`;
+            a.download = `${image.name.split(".")[0]}_${key}_${opt.scale}x_${
+                opt.modelName
+            }.${opt.outputType}`;
             a.click();
             a.remove();
         }
