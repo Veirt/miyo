@@ -137,21 +137,37 @@
             </select>
         </div>
 
+        <div class="flex flex-col gap-2">
+            <label for="model-name">Model Name</label>
+            <select
+                required
+                bind:value={opt.modelName}
+                class="p-2 rounded bg-background"
+                id="model-name"
+            >
+                {#each upscalers[key].modelName as m (m)}
+                    <option value={m}>{m}</option>
+                {/each}
+            </select>
+        </div>
+
         <div class="flex flex-row gap-10">
             <div class="flex flex-col gap-2">
                 <label for="scale">Scale</label>
                 <div class="flex gap-2">
                     {#each upscalers[key].scale.available as s (s)}
-                        <input
-                            required
-                            bind:group={opt.scale}
-                            type="radio"
-                            name="scale"
-                            id="scale"
-                            value={s}
-                            checked={s === upscalers[key].scale.default}
-                        />
-                        {s}
+                        <div hidden={opt.modelName.includes("x4") && s !== 4}>
+                            <input
+                                required
+                                bind:group={opt.scale}
+                                type="radio"
+                                name="scale"
+                                id="scale"
+                                value={s}
+                                checked={s === upscalers[key].scale.default}
+                            />
+                            {s}
+                        </div>
                     {/each}
                 </div>
             </div>
@@ -177,20 +193,6 @@
                     </div>
                 </div>
             {/if}
-        </div>
-
-        <div class="flex flex-col gap-2">
-            <label for="model-name">Model Name</label>
-            <select
-                required
-                bind:value={opt.modelName}
-                class="p-2 rounded bg-background"
-                id="model-name"
-            >
-                {#each upscalers[key].modelName as m (m)}
-                    <option value={m}>{m}</option>
-                {/each}
-            </select>
         </div>
 
         <div class="flex flex-col gap-2">
