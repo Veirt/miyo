@@ -1,4 +1,4 @@
-package upscaler
+package services
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 type Upscaler interface {
-	Upscale() error
+	Upscale(file *os.File) (string, error)
 }
 
 // Usage: realesrgan-ncnn-vulkan -i infile -o outfile [options]...
@@ -34,7 +34,7 @@ type RealEsrganUpscaler struct {
 
 func (u *RealEsrganUpscaler) Upscale(file *os.File) (string, error) {
 	s := fmt.Sprintf("%d", u.Scale)
-	
+
 	outDir := "out"
 	outPath := outDir + "/" + uuid.New().String() + "." + u.OutputType
 	cmd := exec.Command("realesrgan-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", s, "-n", u.ModelName, "-f", u.OutputType)

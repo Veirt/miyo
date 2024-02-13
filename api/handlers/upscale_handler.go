@@ -18,7 +18,7 @@ func UpscaleRealEsrganHandler(c fiber.Ctx) error {
 	}
 
 	img, err := c.FormFile("image")
-	if err != nil {
+	if img == nil || err != nil {
 		return c.JSON(fiber.Map{
 			"err": "Error when getting image",
 		})
@@ -35,15 +35,18 @@ func UpscaleRealEsrganHandler(c fiber.Ctx) error {
 
 	c.SaveFile(img, file.Name())
 
+	// upscaling process
 	scale, err := strconv.Atoi(c.FormValue("scale"))
-	u := upscaler.RealEsrganUpscaler{
+	i := services.Image{
+		File: file,
+	}
+	outputPath, err := i.Upscale(&services.RealEsrganUpscaler{
 		Scale:      scale,
 		ModelName:  form.Value["modelName"][0],
 		OutputType: form.Value["outputType"][0],
-	}
-
-	outputPath, err := u.Upscale(file)
+	})
 	defer os.Remove(outputPath)
+
 	if err != nil {
 		return c.JSON(fiber.Map{
 			"err": "Error when upscaling image",
