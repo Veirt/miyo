@@ -76,6 +76,18 @@
 
         imageResultEl.src = URL.createObjectURL(out);
     }
+
+    function handleDownload() {
+        if (imageResultEl.src) {
+            const a = document.createElement("a");
+            a.href = imageResultEl.src;
+            a.download = `${image.name.split(".")[0]}_${opt.upscaler}_${
+                opt.scale
+            }x_${opt.modelName}.${opt.outputType}`;
+            a.click();
+            a.remove();
+        }
+    }
 </script>
 
 <Navbar />
@@ -220,10 +232,13 @@
                     --handle-border-width="0.125rem"
                     --slider-color="#ffffff"
                     --slider-width="0.125rem"
-                />
+                ></CompareImage>
+                <button
+                    class="p-2 w-full rounded bg-secondary"
+                    on:click={handleDownload}>Download</button
+                >
             {/if}
         {/if}
-        <div>Test</div>
     </div>
 </main>
 
