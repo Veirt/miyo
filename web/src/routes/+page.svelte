@@ -1,6 +1,7 @@
 <script lang="ts">
     import Navbar from "$lib/components/Navbar.svelte";
     import Dropzone from "svelte-file-dropzone";
+    import { CompareImage } from "svelte-compare-image";
     import { upscalers } from "$lib/upscaler";
     import { tick } from "svelte";
 
@@ -32,7 +33,7 @@
     }
 
     let imageEl: HTMLImageElement;
-    let imageResult: HTMLImageElement;
+    let imageResultEl: HTMLImageElement;
 
     let image: File;
     async function handleFilesSelect(
@@ -44,9 +45,9 @@
         await tick();
 
         imageEl.src = URL.createObjectURL(image);
-        imageEl.onload = function () {
-            URL.revokeObjectURL(imageEl.src); // free memory
-        };
+        if (imageResultEl.src) {
+            imageResultEl.removeAttribute("src");
+        }
     }
 
     let loading = false;
@@ -69,10 +70,11 @@
             body: formData,
         });
         const out = await res.blob();
+
         loading = false;
         await tick();
 
-        imageResult.src = URL.createObjectURL(out);
+        imageResultEl.src = URL.createObjectURL(out);
     }
 </script>
 
@@ -208,8 +210,32 @@
         {#if loading}
             <p class="flex items-center h-full">Loading...</p>
         {:else}
-            <img bind:this={imageResult} class="object-contain h-full" alt="" />
+            <!-- svelte-ignore a11y-missing-attribute -->
+            <img hidden bind:this={imageResultEl} />
+            {#if imageEl?.src && imageResultEl?.src}
+                <CompareImage
+                    imageLeftSrc={imageEl?.src}
+                    imageRightSrc={imageResultEl?.src}
+                    --handle-size="2.5rem"
+                    --handle-border-width="0.125rem"
+                    --slider-color="#ffffff"
+                    --slider-width="0.125rem"
+                />
+            {/if}
         {/if}
         <div>Test</div>
     </div>
 </main>
+
+<style>
+    :global(.svelte-compare-image-container) {
+        width: 100%;
+        height: 100%;
+    }
+
+    :global(.svelte-compare-image-container > img) {
+        width: 100%;
+        height: 100% !important;
+        object-fit: contain;
+    }
+</style>

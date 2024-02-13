@@ -25,6 +25,7 @@
   "dependencies": {
     "@unocss/extractor-svelte": "^0.58.5",
     "@unocss/vite": "^0.58.5",
+    "svelte-compare-image": "^2.0.2",
     "svelte-file-dropzone": "^2.0.4"
   }
 }
