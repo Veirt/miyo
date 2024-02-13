@@ -1,5 +1,6 @@
 <script lang="ts">
     import Navbar from "$lib/components/Navbar.svelte";
+    import ImageLoading from "$lib/components/ImageLoading.svelte";
     import Dropzone from "svelte-file-dropzone";
     import { CompareImage } from "svelte-compare-image";
     import { upscalers } from "$lib/upscaler";
@@ -222,7 +223,7 @@
         class="p-5 rounded bg-alt basis-[50%] h-[85vh] flex flex-col items-center gap-2"
     >
         {#if loading}
-            <p class="flex items-center h-full">Loading...</p>
+            <ImageLoading />
         {:else}
             <!-- svelte-ignore a11y-missing-attribute -->
             <img hidden bind:this={imageResultEl} />
