@@ -218,7 +218,8 @@
     </form>
 
     <div
-        class="p-5 rounded bg-alt basis-[50%] h-[85vh] flex flex-col items-center gap-2"
+        class="invisible p-5 rounded bg-alt basis-[50%] h-[85vh] flex flex-col items-center gap-2"
+        class:!visible={(imageEl?.src && imageResultEl?.src) || loading}
     >
         {#if loading}
             <ImageLoading />
