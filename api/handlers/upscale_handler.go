@@ -1,107 +1,98 @@
 package handlers
 
 import (
-	"os"
-	"strconv"
-
 	"github.com/gofiber/fiber/v3"
 	"github.com/veirt/miyo/api/services"
+	"os"
 )
 
-func UpscaleRealEsrganHandler(c fiber.Ctx) error {
-	// TODO: implement validation
-	form, err := c.MultipartForm()
-	if err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when getting form data",
-		})
-	}
-
+func saveTempImage(c fiber.Ctx) (*os.File, error) {
 	img, err := c.FormFile("image")
 	if img == nil || err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when getting image",
-		})
+		return nil, err
 	}
 
 	// save file to CreateTemp
 	file, err := os.CreateTemp("", "image")
 	defer file.Close()
 	if err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when creating temp file",
-		})
+		return nil, err
 	}
 
 	c.SaveFile(img, file.Name())
 
-	// upscaling process
-	scale, err := strconv.Atoi(c.FormValue("scale"))
+	return file, nil
+}
+
+func UpscaleRealEsrganHandler(c fiber.Ctx) error {
+	upscaler := &services.RealEsrganUpscaler{
+		Scale:      c.FormValue("scale"),
+		ModelName:  c.FormValue("modelName"),
+		OutputType: c.FormValue("outputType"),
+	}
+
+	res := services.Validator.GetMessage(upscaler)
+	if !res.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(res)
+	}
+
+	file, err := saveTempImage(c)
+	if file == nil || err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to get the image",
+		})
+	}
+	defer os.Remove(file.Name())
+
 	i := services.Image{
 		File: file,
 	}
-	outputPath, err := i.Upscale(&services.RealEsrganUpscaler{
-		Scale:      scale,
-		ModelName:  form.Value["modelName"][0],
-		OutputType: form.Value["outputType"][0],
-	})
-	defer os.Remove(outputPath)
-
+	outPath, err := i.Upscale(upscaler)
+	defer os.Remove(outPath)
 	if err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when upscaling image",
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to upscale image [realesrgan]",
 		})
 	}
 
-	return c.SendFile(outputPath)
+	return c.SendFile(outPath)
 }
 
 func UpscaleWaifu2xHandler(c fiber.Ctx) error {
-	// TODO: implement validation
-	form, err := c.MultipartForm()
-	if err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when getting form data",
-		})
+	upscaler := &services.Waifu2xUpscaler{
+		Scale:        c.FormValue("scale"),
+		ModelName:    c.FormValue("modelName"),
+		DenoiseLevel: c.FormValue("denoiseLevel"),
+		OutputType:   c.FormValue("outputType"),
 	}
 
-	img, err := c.FormFile("image")
-	if img == nil || err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when getting image",
-		})
+	res := services.Validator.GetMessage(upscaler)
+	if !res.Success {
+		return c.Status(fiber.StatusBadRequest).JSON(res)
 	}
 
-	// save file to CreateTemp
-	file, err := os.CreateTemp("", "image")
-	defer file.Close()
-	if err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when creating temp file",
+	file, err := saveTempImage(c)
+	if file == nil || err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to get the image",
 		})
 	}
+	defer os.Remove(file.Name())
 
-	c.SaveFile(img, file.Name())
-
-	// upscaling process
-	scale, err := strconv.Atoi(c.FormValue("scale"))
-	dl, err := strconv.Atoi(c.FormValue("denoiseLevel"))
 	i := services.Image{
 		File: file,
 	}
-	outputPath, err := i.Upscale(&services.Waifu2xUpscaler{
-		Scale:        scale,
-		DenoiseLevel: dl,
-		ModelName:    form.Value["modelName"][0],
-		OutputType:   form.Value["outputType"][0],
-	})
-	defer os.Remove(outputPath)
-
+	outPath, err := i.Upscale(upscaler)
+	defer os.Remove(outPath)
 	if err != nil {
-		return c.JSON(fiber.Map{
-			"err": "Error when upscaling image",
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"message": "Failed to upscale the image [waifu2x]",
 		})
 	}
 
-	return c.SendFile(outputPath)
+	return c.SendFile(outPath)
 }

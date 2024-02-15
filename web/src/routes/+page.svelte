@@ -1,9 +1,11 @@
 <script lang="ts">
     import Navbar from "$lib/components/Navbar.svelte";
     import ImageLoading from "$lib/components/ImageLoading.svelte";
+    import Toast from "$lib/components/Toast.svelte";
     import Dropzone from "svelte-file-dropzone";
     import { CompareImage } from "svelte-compare-image";
     import { upscalers } from "$lib/upscaler";
+    import { notifications } from "$lib/store/notifications";
     import { tick } from "svelte";
 
     const notypecheck = (x: any) => x;
@@ -64,16 +66,28 @@
         // append the image
         formData.append("image", image);
 
-        const res = await fetch(`/api/upscale/${key}`, {
-            method: "POST",
-            body: formData,
-        });
-        const out = await res.blob();
+        try {
+            const res = await fetch(`/api/upscale/${key}`, {
+                method: "POST",
+                body: formData,
+            });
 
-        loading = false;
-        await tick();
+            if (res.status === 400) {
+                const data = await res.json();
+                throw Error(data.message);
+            }
 
-        imageResultEl.src = URL.createObjectURL(out);
+            const out = await res.blob();
+
+            notifications.success("Upscaled", 2000);
+
+            loading = false;
+            await tick();
+            imageResultEl.src = URL.createObjectURL(out);
+        } catch (err) {
+            notifications.danger(`${err}`, 2000);
+            loading = false;
+        }
     }
 
     function handleDownload() {
@@ -90,7 +104,7 @@
 </script>
 
 <Navbar />
-<main class="flex flex-col justify-around mx-5 mt-5 md:flex-row">
+<main class="flex flex-col justify-around mx-5 mt-5 lg:flex-row">
     <form
         on:submit|preventDefault={handleSubmit}
         class="p-5 rounded bg-alt basis-[45%] flex flex-col justify-between gap-2"
@@ -210,6 +224,7 @@
         </div>
         <div class="flex flex-col">
             <button
+                disabled={loading}
                 type="submit"
                 class="justify-end p-2 mt-5 rounded bg-secondary"
                 >Upscale</button
@@ -243,6 +258,7 @@
         {/if}
     </div>
 </main>
+<Toast />
 
 <style>
     :global(.svelte-compare-image-container) {

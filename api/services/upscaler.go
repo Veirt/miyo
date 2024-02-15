@@ -1,7 +1,6 @@
 package services
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 
@@ -10,6 +9,13 @@ import (
 
 type Upscaler interface {
 	Upscale(file *os.File) (string, error)
+}
+
+func getOutputPath(outType string) string {
+	outDir := "out"
+	outPath := outDir + "/" + uuid.New().String() + "." + outType
+
+	return outPath
 }
 
 // Usage: realesrgan-ncnn-vulkan -i infile -o outfile [options]...
@@ -26,17 +32,14 @@ type Upscaler interface {
 //	-x                   enable tta mode
 //	-f format            output image format (jpg/png/webp, default=ext/png)
 type RealEsrganUpscaler struct {
-	Scale      int    `json:"scale" validate:"required,oneof=2 3 4"`
+	Scale      string `json:"scale" validate:"required,oneof=2 3 4"`
 	ModelName  string `json:"modelName" validate:"required,oneof=realesr-animevideov3 realesrgan-x4plus realesrgan-x4plus-anime realesrnet-x4plus"`
 	OutputType string `json:"outputType" validate:"required,oneof=jpg png webp"`
 }
 
 func (u *RealEsrganUpscaler) Upscale(file *os.File) (string, error) {
-	s := fmt.Sprintf("%d", u.Scale)
-
-	outDir := "out"
-	outPath := outDir + "/" + uuid.New().String() + "." + u.OutputType
-	cmd := exec.Command("realesrgan-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", s, "-n", u.ModelName, "-f", u.OutputType)
+	outPath := getOutputPath(u.OutputType)
+	cmd := exec.Command("realesrgan-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", u.Scale, "-n", u.ModelName, "-f", u.OutputType)
 	err := cmd.Run()
 
 	if err != nil {
@@ -61,19 +64,15 @@ func (u *RealEsrganUpscaler) Upscale(file *os.File) (string, error) {
 //	-x                   enable tta mode
 //	-f format            output image format (jpg/png/webp, default=ext/png)
 type Waifu2xUpscaler struct {
-	Scale        int    `json:"scale" validate:"required,oneof=1 2 4 8 16 32"`
-	DenoiseLevel int    `json:"denoiseLevel" validate:"required,oneof=-1 0 1 2 3"`
+	Scale        string `json:"scale" validate:"required,oneof=1 2 4 8 16 32"`
+	DenoiseLevel string `json:"denoiseLevel" validate:"required,oneof=-1 0 1 2 3"`
 	ModelName    string `json:"modelName" validate:"required,oneof=models-cunet"`
 	OutputType   string `json:"outputType" validate:"required,oneof=jpg png webp"`
 }
 
 func (u *Waifu2xUpscaler) Upscale(file *os.File) (string, error) {
-	s := fmt.Sprintf("%d", u.Scale)
-	dl := fmt.Sprintf("%d", u.DenoiseLevel)
-
-	outDir := "out"
-	outPath := outDir + "/" + uuid.New().String() + "." + u.OutputType
-	cmd := exec.Command("waifu2x-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", s, "-n", dl, "-f", u.OutputType)
+	outPath := getOutputPath(u.OutputType)
+	cmd := exec.Command("waifu2x-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", u.Scale, "-n", u.DenoiseLevel, "-f", u.OutputType)
 	err := cmd.Run()
 
 	if err != nil {
