@@ -39,7 +39,16 @@ type RealEsrganUpscaler struct {
 
 func (u *RealEsrganUpscaler) Upscale(file *os.File) (string, error) {
 	outPath := getOutputPath(u.OutputType)
-	cmd := exec.Command("realesrgan-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", u.Scale, "-n", u.ModelName, "-f", u.OutputType)
+
+	args := []string{
+		"-i", file.Name(),
+		"-o", outPath,
+		"-s", u.Scale,
+		"-m", "models-realesrgan",
+		"-n", u.ModelName,
+		"-f", u.OutputType,
+	}
+	cmd := exec.Command("./upscaler/realesrgan-ncnn-vulkan", args...)
 	err := cmd.Run()
 
 	if err != nil {
@@ -72,7 +81,16 @@ type Waifu2xUpscaler struct {
 
 func (u *Waifu2xUpscaler) Upscale(file *os.File) (string, error) {
 	outPath := getOutputPath(u.OutputType)
-	cmd := exec.Command("waifu2x-ncnn-vulkan", "-i", file.Name(), "-o", outPath, "-s", u.Scale, "-n", u.DenoiseLevel, "-f", u.OutputType)
+
+	args := []string{
+		"-i", file.Name(),
+		"-o", outPath,
+		"-s", u.Scale,
+		"-n", u.DenoiseLevel,
+		"-m", u.ModelName,
+		"-f", u.OutputType,
+	}
+	cmd := exec.Command("./upscaler/waifu2x-ncnn-vulkan", args...)
 	err := cmd.Run()
 
 	if err != nil {

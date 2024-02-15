@@ -65,7 +65,7 @@ export const waifu2x: Upscaler = {
   scale: {
     default: 2,
     // like what, I don't want people to use 32x. My server will die.
-    available: dev ? [1, 2, 4, 8, 16, 32] : [1, 2, 4, 8],
+    available: dev ? [2, 4, 8, 16, 32] : [1, 2, 4, 8],
   },
   denoiseLevel: {
     default: 0,
@@ -74,7 +74,7 @@ export const waifu2x: Upscaler = {
   modelName: [
     "models-cunet",
     "models-upconv_7_anime_style_art_rgb",
-    "models-upconv_7_photos",
+    "models-upconv_7_photo",
   ],
 };
 
