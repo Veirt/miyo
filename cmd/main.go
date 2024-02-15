@@ -7,6 +7,7 @@ import (
 
 func main() {
 	app := fiber.New()
+	app.Static("/", "./dist")
 
 	api := app.Group("/api") // /api
 	api.Post("/upscale/realesrgan", func(c fiber.Ctx) error {
