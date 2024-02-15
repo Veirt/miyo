@@ -71,7 +71,11 @@ export const waifu2x: Upscaler = {
     default: 0,
     available: [-1, 0, 1, 2, 3],
   },
-  modelName: ["models-cunet"],
+  modelName: [
+    "models-cunet",
+    "models-upconv_7_anime_style_art_rgb",
+    "models-upconv_7_photos",
+  ],
 };
 
 export const upscalers = { realesrgan, waifu2x };

@@ -66,7 +66,7 @@ func (u *RealEsrganUpscaler) Upscale(file *os.File) (string, error) {
 type Waifu2xUpscaler struct {
 	Scale        string `json:"scale" validate:"required,oneof=1 2 4 8 16 32"`
 	DenoiseLevel string `json:"denoiseLevel" validate:"required,oneof=-1 0 1 2 3"`
-	ModelName    string `json:"modelName" validate:"required,oneof=models-cunet"`
+	ModelName    string `json:"modelName" validate:"required,oneof=models-cunet models-upconv_7_anime_style_art_rgb models-upconv_7_photo"`
 	OutputType   string `json:"outputType" validate:"required,oneof=jpg png webp"`
 }
 
