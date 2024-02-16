@@ -3,6 +3,7 @@ version: "3.8"
 services:
   miyo:
     container_name: miyo
+    image: ghcr.io/veirt/miyo:latest
     build:
       context: .
       args:
