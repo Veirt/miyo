@@ -13,6 +13,13 @@
     // default to esrgan
     type Upscaler = keyof typeof upscalers;
     let key: Upscaler = "realesrgan";
+
+    let opt = {
+        scale: upscalers[key].scale.default,
+        denoiseLevel: upscalers[key].denoiseLevel?.default,
+        modelName: upscalers[key].modelName[0],
+        outputType: "png",
+    };
     function handleKeyChange(key: Upscaler) {
         opt = {
             scale: upscalers[key].scale.default,
@@ -22,15 +29,14 @@
         };
     }
 
-    let opt = {
-        scale: upscalers[key].scale.default,
-        denoiseLevel: upscalers[key].denoiseLevel?.default,
-        modelName: upscalers[key].modelName[0],
-        outputType: "png",
-    };
-
     $: {
         handleKeyChange(key);
+    }
+
+    $: {
+        if (opt.modelName.includes("x4")) {
+            opt.scale = 4;
+        }
     }
 
     let imageEl: HTMLImageElement;
@@ -53,6 +59,11 @@
 
     let loading = false;
     async function handleSubmit() {
+        if (!image) {
+            notifications.danger("Please upload an image first", 2000);
+            return;
+        }
+
         loading = true;
         const formData = new FormData();
 
@@ -114,7 +125,6 @@
                 class="flex justify-center items-center p-5 text-center rounded bg-background"
             >
                 <Dropzone
-                    required
                     disableDefaultStyles={true}
                     on:drop={handleFilesSelect}
                     accept={"image/jpeg,image/png,image/webp"}
