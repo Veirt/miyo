@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/bin/sh
+
+mkdir -p upscaler
 
 waifu2x="https://github.com/nihui/waifu2x-ncnn-vulkan/releases/download/20220728/waifu2x-ncnn-vulkan-20220728-ubuntu.zip"
 dir="$(basename $waifu2x .zip)"
@@ -15,3 +17,4 @@ unzip -n -j upscaler/realesrgan.zip realesrgan-ncnn-vulkan -d upscaler
 unzip -n -j upscaler/realesrgan.zip "*models*" -d upscaler/models-realesrgan
 
 chmod +x upscaler/*
+rm -f upscaler/waifu2x.zip upscaler/realesrgan.zip

@@ -1,0 +1,6 @@
+upscaler
+.git*
+node_modules
+main
+dist
+.svelte-kit

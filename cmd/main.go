@@ -17,5 +17,5 @@ func main() {
 		return handlers.UpscaleWaifu2xHandler(c)
 	})
 
-	app.Listen(":3000")
+	app.Listen(":9452")
 }
