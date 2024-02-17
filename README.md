@@ -1,5 +1,7 @@
 # miyo
 
+![Screenshot](.github/ss.png)
+
 A Web UI for [realesrgan-ncnn-vulkan](https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan)
 and [waifu2x-ncnn-vulkan](https://github.com/nihui/waifu2x-ncnn-vulkan)
 
