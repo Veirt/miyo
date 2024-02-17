@@ -1,0 +1,9 @@
+[Unit]
+Description=miyo
+
+[Service]
+WorkingDirectory=/opt/miyo
+ExecStart=/opt/miyo/miyo
+
+[Install]
+WantedBy=default.target

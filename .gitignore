@@ -3,4 +3,4 @@ out/*
 upscaler/*
 !upscaler/.gitkeep
 dist/
-main
+miyo

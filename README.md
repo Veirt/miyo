@@ -5,7 +5,18 @@ and [waifu2x-ncnn-vulkan](https://github.com/nihui/waifu2x-ncnn-vulkan)
 
 ## Deploy
 
+### Systemd Service
+
+You will need [just](https://github.com/casey/just) to run this. This will build, compile, and install systemd service automatically.
+
+```bash
+just install
+```
+
 ### Docker Compose
+
+This is the simplest way to deploy `miyo` using `docker-compose`.
+However, NVIDIA GPUs are not supported in this deployment method.
 
 ```yaml
 version: "3.8"
