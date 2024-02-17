@@ -7,7 +7,15 @@ and [waifu2x-ncnn-vulkan](https://github.com/nihui/waifu2x-ncnn-vulkan)
 
 ### Systemd Service
 
-You will need [just](https://github.com/casey/just) to run this. This will build, compile, and install systemd service automatically.
+This method will build `miyo` from source and deploy it as a systemd service.
+
+#### Requirements:
+
+- go
+- bun
+- just
+- wget
+- unzip
 
 ```bash
 just install
