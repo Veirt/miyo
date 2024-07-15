@@ -10,23 +10,22 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "^3.0.0",
-    "@sveltejs/adapter-static": "^3.0.1",
-    "@sveltejs/kit": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^3.0.0",
-    "@unocss/transformer-directives": "^0.58.5",
-    "svelte": "^4.2.7",
-    "svelte-check": "^3.6.0",
-    "tslib": "^2.4.1",
-    "typescript": "^5.0.0",
-    "unocss": "^0.58.5",
-    "vite": "^5.0.3"
+    "@sveltejs/adapter-static": "^3.0.2",
+    "@sveltejs/kit": "^2.5.18",
+    "@sveltejs/vite-plugin-svelte": "^3.1.1",
+    "@unocss/transformer-directives": "^0.58.9",
+    "svelte": "^4.2.18",
+    "svelte-check": "^3.8.4",
+    "tslib": "^2.6.3",
+    "typescript": "^5.5.3",
+    "unocss": "^0.58.9",
+    "vite": "^5.3.3"
   },
   "type": "module",
   "dependencies": {
-    "@unocss/extractor-svelte": "^0.58.5",
-    "@unocss/vite": "^0.58.5",
+    "@unocss/extractor-svelte": "^0.58.9",
+    "@unocss/vite": "^0.58.9",
     "svelte-compare-image": "^2.0.2",
-    "svelte-file-dropzone": "^2.0.4"
+    "svelte-file-dropzone": "^2.0.7"
   }
 }
