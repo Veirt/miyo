@@ -14,6 +14,8 @@
     type Upscaler = keyof typeof upscalers;
     let key: Upscaler = "realesrgan";
 
+    let fileName = "";
+
     let opt = {
         scale: upscalers[key].scale.default,
         denoiseLevel: upscalers[key].denoiseLevel?.default,
@@ -63,6 +65,7 @@
             notifications.danger("Please upload an image first", 2000);
             return;
         }
+        fileName = `${image.name.split(".")[0]}_${key}_${opt.scale}x_${opt.modelName}.${opt.outputType}`;
 
         loading = true;
         const formData = new FormData();
@@ -105,9 +108,7 @@
         if (imageResultEl.src) {
             const a = document.createElement("a");
             a.href = imageResultEl.src;
-            a.download = `${image.name.split(".")[0]}_${key}_${opt.scale}x_${
-                opt.modelName
-            }.${opt.outputType}`;
+            a.download = fileName;
             a.click();
             a.remove();
         }
@@ -128,6 +129,7 @@
                     disableDefaultStyles={true}
                     on:drop={handleFilesSelect}
                     accept={"image/jpeg,image/png,image/webp"}
+                    disabled={loading}
                 >
                     {#if image}
                         <!-- svelte-ignore a11y-missing-attribute -->
