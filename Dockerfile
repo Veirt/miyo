@@ -1,85 +1,63 @@
+# Build stage for web application
 FROM oven/bun:1-alpine AS webbuilder
-
-WORKDIR /app/src
+WORKDIR /app/web
 COPY web/package.json web/bun.lockb ./
 RUN bun install --frozen-lockfile
-
 COPY web/ .
-
-ENV NODE_ENV=production
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
 RUN bun run build
-# dist will be in /app/dist
 
+# Build stage for Go API
 FROM golang:1.22-alpine AS apibuilder
-
 WORKDIR /app
 COPY go.* ./
 RUN go mod download
-
 COPY . .
-RUN go build -o miyo cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o miyo cmd/main.go
 
+# Download stage for Real-ESRGAN models
 FROM alpine:edge AS downloader
 WORKDIR /download
-ENV realesrgan_url "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip"
-RUN apk add --no-cache wget unzip \ 
+ARG REALESRGAN_URL="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip"
+RUN apk add --no-cache wget unzip \
     && mkdir -p upscaler \
-    && wget -q "$realesrgan_url" --no-clobber -O upscaler/realesrgan.zip \
-    && unzip -n -j upscaler/realesrgan.zip "*models*" -d upscaler/models-realesrgan \
+    && wget -q "${REALESRGAN_URL}" -O upscaler/realesrgan.zip \
+    && unzip -j upscaler/realesrgan.zip "*models*" -d upscaler/models-realesrgan \
     && rm -rf upscaler/*.zip
 
-FROM alpine:edge AS compiler
+# Base compiler stage with common dependencies
+FROM alpine:edge AS compiler-base
 RUN apk add --no-cache git vulkan-headers vulkan-loader-dev glslang cmake make gcc g++
 
+# Compile stage for waifu2x
+FROM compiler-base AS waifu2x-compiler
 WORKDIR /app
-RUN git clone https://github.com/nihui/waifu2x-ncnn-vulkan.git --depth 1 \
-    && cd waifu2x-ncnn-vulkan || exit \
-    && git submodule update --init --recursive \
-    && mkdir build \
-    && cd build || exit \
-    && cmake ../src \
-    && cmake --build . -j "$(nproc)"
+RUN git clone --depth 1 https://github.com/nihui/waifu2x-ncnn-vulkan.git waifu2x-ncnn-vulkan
+WORKDIR /app/waifu2x-ncnn-vulkan
+RUN git submodule update --init --recursive \
+    && mkdir build && cd build \
+    && cmake ../src && cmake --build . -j "$(nproc)"
 
+# Compile stage for Real-ESRGAN
+FROM compiler-base AS realesrgan-compiler
 WORKDIR /app
-RUN git clone https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan --depth 1 \
-    && cd Real-ESRGAN-ncnn-vulkan || exit \
-    && sed -i 's|git@github.com:|https://github.com/|g' .gitmodules \
+RUN git clone --depth 1 https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan Real-ESRGAN-ncnn-vulkan
+WORKDIR /app/Real-ESRGAN-ncnn-vulkan
+RUN sed -i 's|git@github.com:|https://github.com/|g' .gitmodules \
     && git submodule update --init --recursive \
-    && mkdir build \
-    && cd build || exit \
-    && cmake ../src \
-    && cmake --build . -j "$(nproc)"
+    && mkdir build && cd build \
+    && cmake ../src && cmake --build . -j "$(nproc)"
 
-# FROM debian:bookworm-slim AS runner
-# RUN apt-get update -y; apt-get install -y libvulkan-dev libgomp1 mesa-vulkan-drivers --no-install-recommends \
-#     && apt-get clean \
-#     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-#
-# WORKDIR /app
-# COPY --from=apibuilder /app/miyo .
-# COPY --from=apibuilder /app/out out/
-# COPY --from=webbuilder /app/dist dist/
-# COPY --from=downloader /download/upscaler upscaler
-#
-# EXPOSE 9452
-# CMD [ "/app/miyo" ]
-
+# Final stage
 FROM alpine:edge AS runner
-
-# Install required packages
-RUN apk update && \
-    apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc
-
+RUN apk update && apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc
 WORKDIR /app
-
-# Copy necessary files from other build stages
 COPY --from=apibuilder /app/miyo .
 COPY --from=apibuilder /app/out out/
 COPY --from=webbuilder /app/dist dist/
-COPY --from=compiler /app/waifu2x-ncnn-vulkan/models/. /app/waifu2x-ncnn-vulkan/build/waifu2x-ncnn-vulkan upscaler/
-COPY --from=compiler /app/Real-ESRGAN-ncnn-vulkan/build/realesrgan-ncnn-vulkan upscaler/
+COPY --from=waifu2x-compiler /app/waifu2x-ncnn-vulkan/models/. /app/waifu2x-ncnn-vulkan/build/waifu2x-ncnn-vulkan upscaler/
+COPY --from=realesrgan-compiler /app/Real-ESRGAN-ncnn-vulkan/build/realesrgan-ncnn-vulkan upscaler/
 COPY --from=downloader /download/upscaler/. upscaler/
-
 EXPOSE 9452
-
-CMD [ "/app/miyo" ]
+CMD ["/app/miyo"]
