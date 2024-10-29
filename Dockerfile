@@ -17,7 +17,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o miyo cmd/main.go
 
 # Download stage for Real-ESRGAN models
-FROM alpine:edge AS downloader
+FROM alpine:3.19 AS downloader
 WORKDIR /download
 ARG REALESRGAN_URL="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip"
 RUN apk add --no-cache wget unzip \
@@ -27,7 +27,7 @@ RUN apk add --no-cache wget unzip \
     && rm -rf upscaler/*.zip
 
 # Base compiler stage with common dependencies
-FROM alpine:edge AS compiler-base
+FROM alpine:3.19 AS compiler-base
 RUN apk add --no-cache git vulkan-headers vulkan-loader-dev glslang cmake make gcc g++
 
 # Compile stage for waifu2x
@@ -50,7 +50,7 @@ RUN sed -i 's|git@github.com:|https://github.com/|g' .gitmodules \
     && cmake ../src && cmake --build . -j "$(nproc)"
 
 # Final stage
-FROM alpine:edge AS runner
+FROM alpine:3.19 AS runner
 RUN apk update && apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc
 WORKDIR /app
 COPY --from=apibuilder /app/miyo .
