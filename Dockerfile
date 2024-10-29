@@ -16,6 +16,7 @@ RUN go mod download
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o miyo cmd/main.go
 
+
 # Download stage for Real-ESRGAN models
 FROM alpine:3.19 AS downloader
 WORKDIR /download
@@ -51,7 +52,15 @@ RUN sed -i 's|git@github.com:|https://github.com/|g' .gitmodules \
 
 # Final stage
 FROM alpine:3.19 AS runner
-RUN apk update && apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc
+
+ARG TARGETPLATFORM
+
+RUN apk update && \
+    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
+    apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-layers libgcc; \
+    else \
+    apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc; \
+    fi
 WORKDIR /app
 COPY --from=apibuilder /app/miyo .
 COPY --from=apibuilder /app/out out/
