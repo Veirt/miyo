@@ -1,22 +1,3 @@
-# Build stage for web application
-FROM oven/bun:1-alpine AS webbuilder
-WORKDIR /app/web
-COPY web/package.json web/bun.lockb ./
-RUN bun install --frozen-lockfile
-COPY web/ .
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
-RUN bun run build
-
-# Build stage for Go API
-FROM golang:1.22-alpine AS apibuilder
-WORKDIR /app
-COPY go.* ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o miyo cmd/main.go
-
-
 # Download stage for Real-ESRGAN models
 FROM alpine:3.19 AS downloader
 WORKDIR /download
@@ -50,6 +31,24 @@ RUN sed -i 's|git@github.com:|https://github.com/|g' .gitmodules \
     && mkdir build && cd build \
     && cmake ../src && cmake --build . -j "$(nproc)"
 
+# Build stage for web application
+FROM oven/bun:1-alpine AS webbuilder
+WORKDIR /app/web
+COPY web/package.json web/bun.lockb ./
+RUN bun install --frozen-lockfile
+COPY web/ .
+ARG NODE_ENV=production
+ENV NODE_ENV=${NODE_ENV}
+RUN bun run build
+
+# Build stage for Go API
+FROM golang:1.22-alpine AS apibuilder
+WORKDIR /app
+COPY go.* ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o miyo cmd/main.go
+
 # Final stage
 FROM alpine:3.19 AS runner
 
@@ -61,12 +60,14 @@ RUN apk update && \
     else \
     apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc; \
     fi
+
 WORKDIR /app
-COPY --from=apibuilder /app/miyo .
-COPY --from=apibuilder /app/out out/
-COPY --from=webbuilder /app/dist dist/
+
 COPY --from=waifu2x-compiler /app/waifu2x-ncnn-vulkan/models/. /app/waifu2x-ncnn-vulkan/build/waifu2x-ncnn-vulkan upscaler/
 COPY --from=realesrgan-compiler /app/Real-ESRGAN-ncnn-vulkan/build/realesrgan-ncnn-vulkan upscaler/
 COPY --from=downloader /download/upscaler/. upscaler/
+COPY --from=apibuilder /app/miyo .
+COPY --from=apibuilder /app/out out/
+COPY --from=webbuilder /app/dist dist/
 EXPOSE 9452
 CMD ["/app/miyo"]
