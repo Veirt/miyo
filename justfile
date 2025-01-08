@@ -8,6 +8,7 @@ dev-web:
 
 build: build-web build-api
 build-web:
+    bun install --cwd web
     bun --cwd web build
 build-api:
     go build -o miyo cmd/main.go
