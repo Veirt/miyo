@@ -54,10 +54,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha,scope=downloader-${{ github.ref }}
-            type=gha,scope=compiler-${{ github.ref }}
+            type=gha,scope=${{ github.repository }}
           cache-to: |
-            type=gha,mode=max,scope=downloader-${{ github.ref }}
-            type=gha,mode=max,scope=compiler-${{ github.ref }}
+            type=gha,mode=max,scope=${{ github.repository }}
           build-args: |
             BUILDKIT_INLINE_CACHE=1
