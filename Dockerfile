@@ -11,7 +11,7 @@ RUN apk add --no-cache wget unzip \
 # Base compiler stage with common dependencies
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
-FROM --platform=$BUILDPLATFORM alpine:3.19 AS compiler-base
+FROM alpine:3.19 AS compiler-base
 COPY --from=xx / /
 ARG TARGETPLATFORM
 RUN xx-apk add --no-cache git vulkan-headers vulkan-loader-dev glslang cmake make gcc g++
