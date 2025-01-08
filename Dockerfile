@@ -23,9 +23,10 @@ RUN apt-get update -y && apt-get install -y \
     pkg-config \
     crossbuild-essential-arm64 \
     libgcc-12-dev-arm64-cross \
-    libc6-dev-arm64-cross
+    libc6-dev-arm64-cross \
+    glslang-tools
 ARG TARGETPLATFORM
-RUN xx-apt-get install -y libvulkan-dev glslang-tools
+RUN xx-apt-get install -y libvulkan-dev
 
 # Compile stage for waifu2x
 FROM --platform=$BUILDPLATFORM compiler-base AS waifu2x-compiler
