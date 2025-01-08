@@ -4,3 +4,5 @@ node_modules
 main
 dist
 .svelte-kit
+Dockerfile
+docker-compose.yml

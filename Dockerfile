@@ -1,8 +1,10 @@
 # Download stage for Real-ESRGAN models
-FROM alpine:3.19 AS downloader
+FROM ubuntu:24.04 AS downloader
 WORKDIR /download
 ARG REALESRGAN_URL="https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesrgan-ncnn-vulkan-20220424-ubuntu.zip"
-RUN apk add --no-cache wget unzip \
+RUN apt-get update && apt-get install -y \
+    wget \
+    unzip \
     && mkdir -p upscaler \
     && wget -q "${REALESRGAN_URL}" -O upscaler/realesrgan.zip \
     && unzip -j upscaler/realesrgan.zip "*models*" -d upscaler/models-realesrgan \
@@ -11,10 +13,12 @@ RUN apk add --no-cache wget unzip \
 # Base compiler stage with common dependencies
 FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
 
-FROM alpine:3.19 AS compiler-base
+FROM --platform=$BUILDPLATFORM ubuntu:24.04 AS compiler-base
+RUN apt-get update -y && apt-get install -y git cmake make gcc g++
+
 COPY --from=xx / /
 ARG TARGETPLATFORM
-RUN xx-apk add --no-cache git vulkan-headers vulkan-loader-dev glslang cmake make gcc g++
+RUN xx-apt-get install -y libvulkan-dev glslang-tools
 
 # Compile stage for waifu2x
 FROM --platform=$BUILDPLATFORM compiler-base AS waifu2x-compiler
@@ -52,16 +56,13 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -installsuffix cgo -o miyo cmd/main.go
 
 # Final stage
-FROM alpine:3.19 AS runner
-
-ARG TARGETPLATFORM
-
-RUN apk update && \
-    if [ "$TARGETPLATFORM" = "linux/arm64" ]; then \
-    apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-layers libgcc; \
-    else \
-    apk add --no-cache libgomp vulkan-tools mesa-vulkan-ati mesa-vulkan-intel mesa-vulkan-layers libgcc; \
-    fi
+FROM ubuntu:24.04 AS runner
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    vulkan-tools \
+    mesa-vulkan-drivers \
+    vulkan-validationlayers \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
