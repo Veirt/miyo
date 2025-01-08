@@ -29,8 +29,6 @@ This is the simplest way to deploy `miyo` using `docker-compose`.
 However, NVIDIA GPUs are not supported in this deployment method.
 
 ```yaml
-version: "3.8"
-
 services:
   miyo:
     container_name: miyo
