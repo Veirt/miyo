@@ -9,27 +9,31 @@ RUN apk add --no-cache wget unzip \
     && rm -rf upscaler/*.zip
 
 # Base compiler stage with common dependencies
-FROM alpine:3.19 AS compiler-base
-RUN apk add --no-cache git vulkan-headers vulkan-loader-dev glslang cmake make gcc g++
+FROM --platform=$BUILDPLATFORM tonistiigi/xx AS xx
+
+FROM --platform=$BUILDPLATFORM alpine:3.19 AS compiler-base
+COPY --from=xx / /
+ARG TARGETPLATFORM
+RUN xx-apk add --no-cache git vulkan-headers vulkan-loader-dev glslang cmake make gcc g++
 
 # Compile stage for waifu2x
-FROM compiler-base AS waifu2x-compiler
+FROM --platform=$BUILDPLATFORM compiler-base AS waifu2x-compiler
 WORKDIR /app
 RUN git clone --depth 1 https://github.com/nihui/waifu2x-ncnn-vulkan.git waifu2x-ncnn-vulkan
 WORKDIR /app/waifu2x-ncnn-vulkan
 RUN git submodule update --init --recursive \
     && mkdir build && cd build \
-    && cmake ../src && cmake --build . -j "$(nproc)"
+    && cmake $(xx-clang --print-cmake-defines) ../src && cmake $(xx-clang --print-cmake-defines) --build . -j "$(nproc)"
 
 # Compile stage for Real-ESRGAN
-FROM compiler-base AS realesrgan-compiler
+FROM --platform=$BUILDPLATFORM compiler-base AS realesrgan-compiler
 WORKDIR /app
 RUN git clone --depth 1 https://github.com/xinntao/Real-ESRGAN-ncnn-vulkan Real-ESRGAN-ncnn-vulkan
 WORKDIR /app/Real-ESRGAN-ncnn-vulkan
 RUN sed -i 's|git@github.com:|https://github.com/|g' .gitmodules \
     && git submodule update --init --recursive \
     && mkdir build && cd build \
-    && cmake ../src && cmake --build . -j "$(nproc)"
+    && cmake $(xx-clang --print-cmake-defines) ../src && cmake $(xx-clang --print-cmake-defines) --build . -j "$(nproc)"
 
 # Build stage for web application
 FROM oven/bun:1-alpine AS webbuilder
@@ -37,8 +41,6 @@ WORKDIR /app/web
 COPY web/package.json web/bun.lockb ./
 RUN bun install --frozen-lockfile
 COPY web/ .
-ARG NODE_ENV=production
-ENV NODE_ENV=${NODE_ENV}
 RUN bun run build
 
 # Build stage for Go API
@@ -47,7 +49,7 @@ WORKDIR /app
 COPY go.* ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o miyo cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -a -installsuffix cgo -o miyo cmd/main.go
 
 # Final stage
 FROM alpine:3.19 AS runner
@@ -69,5 +71,5 @@ COPY --from=downloader /download/upscaler/. upscaler/
 COPY --from=apibuilder /app/miyo .
 COPY --from=apibuilder /app/out out/
 COPY --from=webbuilder /app/dist dist/
-EXPOSE 9452
+EXPOSE 9452/tcp
 CMD ["/app/miyo"]
