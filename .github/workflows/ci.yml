@@ -27,14 +27,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.ref }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Log in to the Container Registry
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
@@ -58,8 +50,14 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha,scope=${{ github.repository }}
-          cache-to: type=gha,mode=max,scope=${{ github.repository }}
           push: ${{ github.ref == 'refs/heads/master' && github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: |
+            type=gha,scope=downloader-${{ github.ref }}
+            type=gha,scope=compiler-${{ github.ref }}
+          cache-to: |
+            type=gha,mode=max,scope=downloader-${{ github.ref }}
+            type=gha,mode=max,scope=compiler-${{ github.ref }}
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
